@@ -1,0 +1,6 @@
+model_checkpoint_path: "C:\\Users\\Emile\\Dropbox\\Universiteit\\cnn-text-classification-tf\\runs\\1497534303\\checkpoints\\model-20400"
+all_model_checkpoint_paths: "C:\\Users\\Emile\\Dropbox\\Universiteit\\cnn-text-classification-tf\\runs\\1497534303\\checkpoints\\model-20000"
+all_model_checkpoint_paths: "C:\\Users\\Emile\\Dropbox\\Universiteit\\cnn-text-classification-tf\\runs\\1497534303\\checkpoints\\model-20100"
+all_model_checkpoint_paths: "C:\\Users\\Emile\\Dropbox\\Universiteit\\cnn-text-classification-tf\\runs\\1497534303\\checkpoints\\model-20200"
+all_model_checkpoint_paths: "C:\\Users\\Emile\\Dropbox\\Universiteit\\cnn-text-classification-tf\\runs\\1497534303\\checkpoints\\model-20300"
+all_model_checkpoint_paths: "C:\\Users\\Emile\\Dropbox\\Universiteit\\cnn-text-classification-tf\\runs\\1497534303\\checkpoints\\model-20400"
