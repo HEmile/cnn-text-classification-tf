@@ -45,8 +45,11 @@ def get_ngram_mutations(sentence, distribution):
             mutations.append(' '.join(mutation))
     return mutations
 
-sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
-distribution = "trigram"
-mutations = get_ngram_mutations(sentence, distribution)
-for mutation in mutations:
-    print(mutation)
+example = False
+#example of how to use the function
+if example:
+    sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
+    distribution = "trigram"
+    mutations = get_ngram_mutations(sentence, distribution)
+    for mutation in mutations:
+        print(mutation)
