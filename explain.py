@@ -72,9 +72,6 @@ def explain(sentence):
     predicted_y = all_predictions[-1]
     print(predicted_y)
     prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
-    print(prob_y)
-
-    print('Predicted class label:', predicted_y)
 
     words = sentence.split()
     weight_evidence = []
@@ -82,6 +79,7 @@ def explain(sentence):
     for i in range(len(words)):
         pred_probs = []
         for j in range(S * i, S * (i + 1)):
+            print(x_v[j])
             print(softmax(all_probabilities[j])[int(predicted_y)])
             pred_probs.append(softmax(all_probabilities[j])[int(predicted_y)])
         weight_evidence.append(np.average(pred_probs) - prob_y)
@@ -90,5 +88,9 @@ def explain(sentence):
     out_path = os.path.join(FLAGS.checkpoint_dir, "..", "explain.csv")
     with open(out_path, 'w') as f:
         csv.writer(f).writerows(stacked)
+    print(prob_y)
+    print('Predicted class label:', predicted_y)
+    print(checkpoint_file)
 
-explain('Hello this is a test sentence. How are you doing?')
+explain('once again mr . Costner has dragged out a movie for far longer than necessary . aside from the terrific sea rescue sequences , of which there are very few i just did not care about any of the characters . most of us have ghosts in the closet , and Costner\'s character are realized early on , and then forgotten until much later , by which time I did not care . the character we should really care about is a very cocky , overconfident Ashton Kutcher . the problem is he comes off as kid who thinks he\'s better than anyone else around him and shows no signs of a cluttered closet . '
+        'his only obstacle appears to be winning over Costner . finally when we are well past the half way point of this stinker , Costner tells us all about Kutcher\'s ghosts . we are told why Kutcher is driven to be the best with no prior inkling or foreshadowing . no magic here, it was all I could do to keep from turning it off an hour in s.')

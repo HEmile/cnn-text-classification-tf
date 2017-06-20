@@ -48,7 +48,7 @@ def get_S_ngram_mutations(sentence, S, distribution):
                 mutations.append(' '.join(mutation))
     return mutations
 
-example = True
+example = False
 #example of how to use the function
 if example:
     sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
