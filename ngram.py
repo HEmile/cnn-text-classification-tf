@@ -12,7 +12,7 @@ def get_ngram(n, data):
     return matrix_terms, matrix_prob, matrix_freq
 
 
-def sample_ngram(num_sample, X):
+def sample_ngram(num_sample):#, X):
   # sample unigram
   unigram_terms, unigram_prob, _ = get_ngram(1, X)
   unigram_sample = np.random.choice(unigram_terms, num_sample, p=unigram_prob)
@@ -41,6 +41,7 @@ def sample_ngram(num_sample, X):
       bg_terms = bigram_terms[b_index]
       bg_sample = np.random.choice(bg_terms, 1, p=bg_prob)
       bigram_sample[i] = bg_sample[0]
+      print("loop")
     tg_prob = trigram_prob[t_index] / np.sum(trigram_prob[t_index])
     tg_terms = trigram_terms[t_index]
     tg_sample = np.random.choice(tg_terms, 1, p=tg_prob)

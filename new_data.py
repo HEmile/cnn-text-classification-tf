@@ -1,10 +1,11 @@
 from numpy import floor, ceil
-from unigram import sample_ngram
+from ngram import sample_ngram
+from unigram import sample_unigram
 
 def words_from_ngram_distribution(distribution, sample_count=1):
     if distribution == "unigram" or distribution == "bigram" or distribution == "trigram":
-        ug = sample_ngram(sample_count)
         if distribution == "unigram":
+            ug = sample_unigram(sample_count)
             return ug
         if distribution == "bigram":
             return bg
@@ -48,7 +49,7 @@ def get_S_ngram_mutations(sentence, S, distribution):
                 mutations.append(' '.join(mutation))
     return mutations
 
-example = True
+example = False
 #example of how to use the function
 if example:
     sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
