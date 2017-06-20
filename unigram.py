@@ -12,9 +12,10 @@ def get_ngram(n, data):
     return matrix_terms, matrix_prob, matrix_freq
 
 
-def sample_ngram(num_sample):#, X):
+def sample_unigram(num_sample):#, X):
   # sample unigram
   unigram_terms, unigram_prob, _ = get_ngram(1, X)
   unigram_sample = np.random.choice(unigram_terms, num_sample, p=unigram_prob)
   
   return unigram_sample
+

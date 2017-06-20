@@ -4,7 +4,7 @@ from tensorflow.contrib import learn
 import data_helpers
 import numpy as np
 import csv
-import new_data
+import new_continuous_data
 import math
 
 def softmax(scores):
@@ -26,7 +26,7 @@ def explain(sentence):
 
     tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
 
-    S = 100
+    S = 10
 
     FLAGS = tf.flags.FLAGS
     FLAGS._parse_flags()
@@ -34,7 +34,7 @@ def explain(sentence):
     vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
     vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
-    x_v = new_data.get_S_ngram_mutations(sentence, S, 'unigram')
+    x_v = new_continuous_data.get_mutations(sentence, S)
     x_v.append(sentence)
 
     x_variants = np.array(list(vocab_processor.transform(x_v)))
@@ -72,9 +72,6 @@ def explain(sentence):
     predicted_y = all_predictions[-1]
     print(predicted_y)
     prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
-    print(prob_y)
-
-    print('Predicted class label:', predicted_y)
 
     words = sentence.split()
     weight_evidence = []
@@ -82,6 +79,7 @@ def explain(sentence):
     for i in range(len(words)):
         pred_probs = []
         for j in range(S * i, S * (i + 1)):
+            print(x_v[j])
             print(softmax(all_probabilities[j])[int(predicted_y)])
             pred_probs.append(softmax(all_probabilities[j])[int(predicted_y)])
         weight_evidence.append(np.average(pred_probs) - prob_y)
@@ -90,5 +88,8 @@ def explain(sentence):
     out_path = os.path.join(FLAGS.checkpoint_dir, "..", "explain.csv")
     with open(out_path, 'w') as f:
         csv.writer(f).writerows(stacked)
+    print(prob_y)
+    print('Predicted class label:', predicted_y)
+    print(checkpoint_file)
 
-explain('Hello this is a test sentence. How are you doing?')
+explain('tobey maguire is a poster boy for the geek generation . ')
