@@ -46,9 +46,7 @@ def sample_continous(words, ngrams):
     if len(words) == 2:
       b_index = [j for j in range(len(bigram_terms)) if words[0] == bigram_terms[j].split()[0]]
       if len(b_index) < 1:
-        print("ERROR, no bigrams found!")
-        return [words[0], "UNK"]
-        break
+        return [words[0], 'UNK']
       else:
         bg_sample = words
         while(bg_sample[1] == words[1]):

@@ -4,7 +4,7 @@ from tensorflow.contrib import learn
 import data_helpers
 import numpy as np
 import csv
-import new_data
+import new_continuous_data
 import math
 
 def softmax(scores):
@@ -26,7 +26,7 @@ def explain(sentence):
 
     tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
 
-    S = 100
+    S = 10
 
     FLAGS = tf.flags.FLAGS
     FLAGS._parse_flags()
@@ -34,7 +34,7 @@ def explain(sentence):
     vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
     vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
-    x_v = new_data.get_S_ngram_mutations(sentence, S, 'unigram')
+    x_v = new_continuous_data.get_mutations(sentence, S)
     x_v.append(sentence)
 
     x_variants = np.array(list(vocab_processor.transform(x_v)))
@@ -92,5 +92,4 @@ def explain(sentence):
     print('Predicted class label:', predicted_y)
     print(checkpoint_file)
 
-explain('once again mr . Costner has dragged out a movie for far longer than necessary . aside from the terrific sea rescue sequences , of which there are very few i just did not care about any of the characters . most of us have ghosts in the closet , and Costner\'s character are realized early on , and then forgotten until much later , by which time I did not care . the character we should really care about is a very cocky , overconfident Ashton Kutcher . the problem is he comes off as kid who thinks he\'s better than anyone else around him and shows no signs of a cluttered closet . '
-        'his only obstacle appears to be winning over Costner . finally when we are well past the half way point of this stinker , Costner tells us all about Kutcher\'s ghosts . we are told why Kutcher is driven to be the best with no prior inkling or foreshadowing . no magic here, it was all I could do to keep from turning it off an hour in s.')
+explain('tobey maguire is a poster boy for the geek generation . ')
