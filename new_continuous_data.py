@@ -74,7 +74,7 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
     return mutations
 
 
-example = True
+example = False
 if example:
     sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
     S = 2

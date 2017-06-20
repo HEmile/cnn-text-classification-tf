@@ -80,6 +80,7 @@ def explain(sentence):
         pred_probs = []
         for j in range(S * i, S * (i + 1)):
             print(x_v[j])
+            print(all_probabilities[j])
             print(softmax(all_probabilities[j])[int(predicted_y)])
             pred_probs.append(softmax(all_probabilities[j])[int(predicted_y)])
         weight_evidence.append(np.average(pred_probs) - prob_y)
@@ -92,4 +93,4 @@ def explain(sentence):
     print('Predicted class label:', predicted_y)
     print(checkpoint_file)
 
-explain('tobey maguire is a poster boy for the geek generation . ')
+explain('with not a lot of help from the screenplay ( proficient , but singularly cursory ) , [testud] acts with the feral intensity of the young bette davis . ')
