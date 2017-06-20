@@ -27,7 +27,7 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
 
     mutations = []
     for index in range(len(sentence)+1):
-        mutation = sentence[:]
+        # mutation = sentence[:]
         indices = []
         words = []
         mutated_words = []
@@ -39,6 +39,7 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
         # print("index-window_size:", index-window_size)
         if window_mode == "preceding" and (index - window_size >= 0):
             for _ in range(S):
+                mutation = sentence[:]
                 indices = range(index - window_size, index)
                 words = mutation[index - window_size:index]
                 mutated_words = word_from_distribution(ngrams, words)
@@ -57,10 +58,10 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
                 # print(' '.join(mutation))
                 mutations.append(' '.join(mutation))
         elif window_mode == "preceding" and (index - window_size == -1):
+            #first word unigram for bigram
             mutated_words = words_from_ngram_distribution("unigram", S)
 
             all_mutated_words = list(mutated_words)
-            #first word unigram for bigram
             for _ in range(S):
                 mutation = sentence[:]
 
@@ -68,15 +69,25 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
                 for mutated_index, mutated_word in zip(range(0,1), mutated_words.split()):
                     mutation[mutated_index] = mutated_word
 
-                mutations.append(' '.join(mutation))
+                mutations.append(' '.join(mutation) + "***")
 
     return mutations
 
 
-example = False
+example = True
 if example:
-    mutations = get_mutations("a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . ", 2)
+    sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
+    S = 2
+    window_size = 2
+    mutations = get_mutations(sentence, S, window_size)
 
-    print('\n')
+    print(sentence+'\n')
+
+    i = S
     for mutation in mutations:
+        i = i-1
         print(mutation)
+        if i == 0:
+            i = S
+            print()
+

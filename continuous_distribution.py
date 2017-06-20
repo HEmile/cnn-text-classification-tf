@@ -9,6 +9,7 @@ class nGrams:
                                     "data/rt-polaritydata/rt-polarity.neg")
     self.unigram_terms, self.unigram_prob, _ = get_ngram(1, X)
     self.bigram_terms, self.bigram_prob, _ = get_ngram(2, X)
+    # self.bigram_dict = get_ngramDict
     self.trigram_terms, self.trigram_prob, _ = get_ngram(3, X)
 
 def get_ngram(n, data):
@@ -46,6 +47,7 @@ def sample_continous(words, ngrams):
       b_index = [j for j in range(len(bigram_terms)) if words[0] == bigram_terms[j].split()[0]]
       if len(b_index) < 1:
         print("ERROR, no bigrams found!")
+        return [words[0], "UNK"]
         break
       else:
         bg_sample = words
@@ -54,6 +56,8 @@ def sample_continous(words, ngrams):
           bg_terms = bigram_terms[b_index]
           bg_sample = np.random.choice(bg_terms, 1, p=bg_prob)
           bg_sample = bg_sample[0].split()
+          print(bg_sample)
+          print(words)
         return bg_sample #uncomment this if a trigram should be based on only one word
     else:
       bigram_sample = words
@@ -66,12 +70,17 @@ def sample_continous(words, ngrams):
       print("WARNING, no trigrams found because no bigrams were found!")
       break
       
-    if len(t_index) > 0:
-      tg_prob = trigram_prob[t_index] / np.sum(trigram_prob[t_index])
-      tg_terms = trigram_terms[t_index]
-      tg_sample = np.random.choice(tg_terms, 1, p=tg_prob)
-      # trigram_sample.append(tg_sample[0])
+    n_indices = len(t_index)
+    if n_indices > 0:
+      tg_sample = words
+      while n_indices > 0 and (tg_sample[2] == words[2]):
+        tg_prob = trigram_prob[t_index] / np.sum(trigram_prob[t_index])
+        tg_terms = trigram_terms[t_index]
+        tg_sample = np.random.choice(tg_terms, 1, p=tg_prob)
+        tg_sample = tg_sample[0].split()
+        print("loop")
+        n_indices = n_indices - 1
     else:
       # print("WARNING, no trigrams found because no bigrams were found!")
       return("XXX")
-  return tg_sample[0].split()
+  return tg_sample
