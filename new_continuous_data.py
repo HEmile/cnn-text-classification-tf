@@ -1,12 +1,12 @@
 from numpy import floor, ceil
 from continuous_distribution import nGrams, sample_continous
-from unigram import sample_unigram
+# from unigram import sample_unigram
 from new_data import words_from_ngram_distribution
 
 #dummy placefiller function
 def word_from_distribution(ngrams, words):
     if len(words) == 1: #"unigram":
-        return unigram
+        return ngrams.sample_unigram()
     if len(words) == 2: # "bigram":
         return sample_continous(words, ngrams)
     if len(words) == 3: # "trigram":

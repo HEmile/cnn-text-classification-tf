@@ -91,5 +91,3 @@ def sample_continous(words, ngrams):
             tg_prob = trigram_prob / np.sum(trigram_prob)
             tg_sample = np.random.choice(trigrams, 1, p=tg_prob)[0]
             return [words[0], words[1], tg_sample]
-
-    return "OEI"
