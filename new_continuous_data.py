@@ -27,9 +27,6 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
 
     mutations = []
     for index in range(len(sentence)+1):
-        indices = []
-        words = []
-        mutated_words = []
         if window_mode == "preceding" and (index - window_size >= 0):
             for _ in range(S):
                 mutation = sentence[:]
@@ -80,7 +77,30 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
     return mutations
 
 
-example = True
+def get_removed_mutations(sentence):
+    mutations = []
+    words = sentence.split()
+    for i in range(len(words)):
+        neww = list(words)
+        # del neww[i]
+        neww[i] = '-UNK'
+        mutations.append(' '.join(neww))
+    return mutations
+
+
+def get_removed_phrase_mutations(sentence, max_phrase=3):
+    mutations = []
+    words = sentence.split()
+    for phr_length in range(1, max_phrase + 1):
+        unks = ['UNK'] * phr_length
+        for i in range(len(words) + 1 - phr_length):
+            neww = list(words)
+            neww[i:i+phr_length] = unks
+            mutations.append(' '.join(neww))
+    return mutations
+
+
+example = False
 if example:
     sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
     S = 20
