@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 PATH = 'data/rt-polaritydata/combined.txt'
 MODEL_PATH = 'cbow_model/'
-NUM_TOKENS = 21245
+NUM_TOKENS = 268215
 TRAIN_MODEL = False
 LOAD_MODEL = True
 
