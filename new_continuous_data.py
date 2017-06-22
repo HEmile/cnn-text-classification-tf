@@ -52,13 +52,13 @@ example = True
 if example:
     sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
     S = 20
-    window_size = 3
+    window_size = 2
     mutations = get_mutations(sentence, S, window_size)
 
     print(sentence+'\n')
 
     i = S
-    for mutation in mutations:
+    for mutation in mutations:  
         i = i-1
         print(mutation)
         if i == 0:

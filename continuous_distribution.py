@@ -1,13 +1,18 @@
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 import data_helpers as dh
+import os.path
 # from unigram import sample_unigram
 
 class nGrams:
     def __init__(self, X=""):
         if X == "":
-            X, _ = dh.load_data_and_labels("data/rt-polaritydata/combined.txt",
-                                           "data/rt-polaritydata/aclImdb_test.txt")
+            if os.path.isfile("data/rt-polaritydata/aclImdb_test.txt"):
+                X, _ = dh.load_data_and_labels("data/rt-polaritydata/combined.txt",
+                                            "data/rt-polaritydata/aclImdb_test.txt")
+            else:
+                X, _ = dh.load_data_and_labels("data/rt-polaritydata/rt-polarity.pos",
+                                            "data/rt-polaritydata/rt-polarity.neg")
         self.unigram_terms, self.unigram_prob, _ = get_ngram(1, X)
 
         self.bigram_terms, self.bigram_prob, _ = get_ngram(2, X)
