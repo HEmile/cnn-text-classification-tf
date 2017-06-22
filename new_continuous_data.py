@@ -2,6 +2,7 @@ from numpy import floor, ceil
 from continuous_distribution import nGrams, sample_continous
 # from unigram import sample_unigram
 from new_data import words_from_ngram_distribution
+from cbow_sample import sample_cbow
 
 #dummy placefiller function
 def word_from_distribution(ngrams, words):
@@ -15,8 +16,14 @@ def word_from_distribution(ngrams, words):
         return(["PLANETS", "PLANETS", "PLANETS"])
 
 def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
-    ngrams = nGrams()
+    
     sentence = sentence.split()
+    
+    if window_mode=="preceding":
+        ngrams = nGrams()
+
+    if window_mode=="cbow":
+        model = load_model() #TODO!!!
 
     mutations = []
     for index in range(len(sentence)+1):
@@ -45,6 +52,31 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
                 for mutated_index, mutated_word in zip(range(index-1,index), mutated_words.split()):
                     mutation[mutated_index] = mutated_word
                 mutations.append(' '.join(mutation))
+        elif window_mode == "cbow" and (index - 1 >= 0) and (index < len(sentence)-1): #always uses a window of 3
+            for _ in range(S):
+                mutation = sentence[:]
+                mutated_word = sample_cbow(mutation[index-1], mutation[index+1], model)
+                mutation[index] = mutated_word
+
+                mutations.append(' '.join(mutation))
+        elif window_mode == "cbow" and (index == 0):
+            for _ in range(S):
+                mutation = sentence[:]
+                mutated_word = sample_cbow("", mutation[index+1], model)
+                mutation[index] = mutated_word
+
+                mutations.append(' '.join(mutation))
+        elif window_mode == "cbow" and (index == len(sentence)-1):
+            for _ in range(S):
+                mutation = sentence[:]
+                mutated_word = sample_cbow(mutation[index-1], "", model)
+                mutation[index] = mutated_word
+
+                mutations.append(' '.join(mutation))
+
+
+
+
     return mutations
 
 
@@ -53,7 +85,7 @@ if example:
     sentence = "a disturbing and frighteningly evocative assembly of imagery and hypnotic music composed by philip glass . "
     S = 20
     window_size = 2
-    mutations = get_mutations(sentence, S, window_size)
+    mutations = get_mutations(sentence, S, window_size, window_mode="cbow")
 
     print(sentence+'\n')
 
