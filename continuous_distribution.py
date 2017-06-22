@@ -6,8 +6,8 @@ import data_helpers as dh
 class nGrams:
     def __init__(self, X=""):
         if X == "":
-            X, y = dh.load_data_and_labels("data/rt-polaritydata/rt-polarity.pos",
-                                           "data/rt-polaritydata/rt-polarity.neg")
+            X, _ = dh.load_data_and_labels("data/rt-polaritydata/combined.txt",
+                                           "data/rt-polaritydata/aclImdb_test.txt")
         self.unigram_terms, self.unigram_prob, _ = get_ngram(1, X)
 
         self.bigram_terms, self.bigram_prob, _ = get_ngram(2, X)
