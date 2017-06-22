@@ -33,10 +33,10 @@ vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
 
 def explain(sentence):
-    # S = 100
-    # x_v = new_continuous_data.get_mutations(sentence, S, window_size=2)
-    S = 1
-    x_v = new_continuous_data.get_removed_phrase_mutations(sentence)
+    S = 100
+    x_v = new_continuous_data.get_mutations(sentence, S, window_size=1, window_mode='cbow', cbow_most_prob=False)
+    # S = 1
+    # x_v = new_continuous_data.get_removed_mutations(sentence)
     x_v.append(sentence)
 
     x_variants = np.array(list(vocab_processor.transform(x_v)))
