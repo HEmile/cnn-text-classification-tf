@@ -3,6 +3,7 @@ from continuous_distribution import nGrams, sample_continous
 # from unigram import sample_unigram
 from new_data import words_from_ngram_distribution
 from cbow_sample import sample_cbow
+import pickle
 
 #dummy placefiller function
 def word_from_distribution(ngrams, words):
@@ -15,7 +16,7 @@ def word_from_distribution(ngrams, words):
     else:
         return(["PLANETS", "PLANETS", "PLANETS"])
 
-def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
+def get_mutations(sentence, S, window_size=2, window_mode="preceding", cbow_most_prob=False):
     
     sentence = sentence.split()
     
@@ -23,7 +24,8 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
         ngrams = nGrams()
 
     if window_mode=="cbow":
-        model = load_model() #TODO!!!
+        with open('cbow_model/model.dump', 'rb') as f:
+            model = pickle.load(f) #TODO!!!
 
     mutations = []
     for index in range(len(sentence)+1):
@@ -50,29 +52,26 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding"):
                     mutation[mutated_index] = mutated_word
                 mutations.append(' '.join(mutation))
         elif window_mode == "cbow" and (index - 1 >= 0) and (index < len(sentence)-1): #always uses a window of 3
-            for _ in range(S):
+            mutated_words = sample_cbow(sentence[index-1], sentence[index+1], model, samples=S, most_prob=cbow_most_prob)
+            for word in mutated_words:
                 mutation = sentence[:]
-                mutated_word = sample_cbow(mutation[index-1], mutation[index+1], model)
-                mutation[index] = mutated_word
+                mutation[index] = word[0]
 
                 mutations.append(' '.join(mutation))
         elif window_mode == "cbow" and (index == 0):
-            for _ in range(S):
+            mutated_words = sample_cbow("", sentence[index+1], model, samples=S, most_prob=cbow_most_prob)
+            for mutated_word in mutated_words:
                 mutation = sentence[:]
-                mutated_word = sample_cbow("", mutation[index+1], model)
-                mutation[index] = mutated_word
+                mutation[index] = mutated_word[0]
 
                 mutations.append(' '.join(mutation))
         elif window_mode == "cbow" and (index == len(sentence)-1):
-            for _ in range(S):
+            mutated_words = sample_cbow(sentence[index-1], "", model, samples=S, most_prob=cbow_most_prob)
+            for mutated_word in mutated_words:
                 mutation = sentence[:]
-                mutated_word = sample_cbow(mutation[index-1], "", model)
-                mutation[index] = mutated_word
+                mutation[index] = mutated_word[0]
 
                 mutations.append(' '.join(mutation))
-
-
-
 
     return mutations
 
@@ -82,8 +81,8 @@ def get_removed_mutations(sentence):
     words = sentence.split()
     for i in range(len(words)):
         neww = list(words)
-        # del neww[i]
-        neww[i] = '-UNK'
+        del neww[i]
+        # neww[i] = '-UNK'
         mutations.append(' '.join(neww))
     return mutations
 
