@@ -13,28 +13,30 @@ def softmax(scores):
     e2 = math.exp(s2)
     return e1/(e1+e2), e2/(e1+e2)
 
+# Parameters
+# ==================================================
+
+# Eval Parameters
+tf.flags.DEFINE_string("checkpoint_dir", "./runs/1497534303/checkpoints/", "Checkpoint directory from training run")
+
+# Misc Parameters
+tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
+tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
+
+tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
+
+
+FLAGS = tf.flags.FLAGS
+FLAGS._parse_flags()
+vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
+vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+
+
 def explain(sentence):
-    # Parameters
-    # ==================================================
-
-    # Eval Parameters
-    tf.flags.DEFINE_string("checkpoint_dir", "./runs/1497534303/checkpoints/", "Checkpoint directory from training run")
-
-    # Misc Parameters
-    tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
-    tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
-
-    tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-
-    S = 10
-
-    FLAGS = tf.flags.FLAGS
-    FLAGS._parse_flags()
-
-    vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
-    vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
-
-    x_v = new_continuous_data.get_mutations(sentence, S)
+    # S = 100
+    # x_v = new_continuous_data.get_mutations(sentence, S, window_size=2)
+    S = 1
+    x_v = new_continuous_data.get_removed_phrase_mutations(sentence)
     x_v.append(sentence)
 
     x_variants = np.array(list(vocab_processor.transform(x_v)))
@@ -70,7 +72,7 @@ def explain(sentence):
                 for result in results[1]:
                     all_probabilities.append(result)
     predicted_y = all_predictions[-1]
-    print(predicted_y)
+    # print(predicted_y)
     prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
 
     words = sentence.split()
@@ -83,7 +85,7 @@ def explain(sentence):
             print(all_probabilities[j])
             print(softmax(all_probabilities[j])[int(predicted_y)])
             pred_probs.append(softmax(all_probabilities[j])[int(predicted_y)])
-        weight_evidence.append(np.average(pred_probs) - prob_y)
+        weight_evidence.append(np.average(pred_probs))
     stacked = np.column_stack((words, weight_evidence))
     print(stacked)
     out_path = os.path.join(FLAGS.checkpoint_dir, "..", "explain.csv")
@@ -93,4 +95,8 @@ def explain(sentence):
     print('Predicted class label:', predicted_y)
     print(checkpoint_file)
 
-explain('with not a lot of help from the screenplay ( proficient , but singularly cursory ) , [testud] acts with the feral intensity of the young bette davis . ')
+# -elling , portrayed with quiet fastidiousness by per christian ellefsen , is a truly singular character , one whose frailties are only slightly magnified versions of the ones that vex nearly everyone .
+
+# with open('data/rt-polaritydata/rt-polarity.pos', 'r') as f:
+#     for line in f:
+explain('if they want to pay hundreds of dollars for a dull wine , so be it . ')
