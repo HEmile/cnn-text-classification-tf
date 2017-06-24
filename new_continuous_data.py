@@ -52,21 +52,21 @@ def get_mutations(sentence, S, window_size=2, window_mode="preceding", cbow_most
                     mutation[mutated_index] = mutated_word
                 mutations.append(' '.join(mutation))
         elif window_mode == "cbow" and (index - 1 >= 0) and (index < len(sentence)-1): #always uses a window of 3
-            mutated_words = sample_cbow(sentence[index-1], sentence[index+1], model, samples=S, most_prob=cbow_most_prob)
+            mutated_words = sample_cbow(sentence[index-1], sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
             for word in mutated_words:
                 mutation = sentence[:]
                 mutation[index] = word[0]
 
                 mutations.append(' '.join(mutation))
         elif window_mode == "cbow" and (index == 0):
-            mutated_words = sample_cbow("", sentence[index+1], model, samples=S, most_prob=cbow_most_prob)
+            mutated_words = sample_cbow("<START>", sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
             for mutated_word in mutated_words:
                 mutation = sentence[:]
                 mutation[index] = mutated_word[0]
 
                 mutations.append(' '.join(mutation))
         elif window_mode == "cbow" and (index == len(sentence)-1):
-            mutated_words = sample_cbow(sentence[index-1], "", model, samples=S, most_prob=cbow_most_prob)
+            mutated_words = sample_cbow(sentence[index-1], "<END>", model, sentence[index], samples=S, most_prob=cbow_most_prob)
             for mutated_word in mutated_words:
                 mutation = sentence[:]
                 mutation[index] = mutated_word[0]
@@ -83,6 +83,15 @@ def get_removed_mutations(sentence):
         neww = list(words)
         del neww[i]
         # neww[i] = '-UNK'
+        mutations.append(' '.join(neww))
+    return mutations
+
+def get_unked_mutations(sentence):
+    mutations = []
+    words = sentence.split()
+    for i in range(len(words)):
+        neww = list(words)
+        neww[i] = '-UNK'
         mutations.append(' '.join(neww))
     return mutations
 

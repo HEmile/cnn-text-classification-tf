@@ -32,11 +32,9 @@ vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
 vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
 
-def explain(sentence):
-    S = 100
-    x_v = new_continuous_data.get_mutations(sentence, S, window_size=1, window_mode='cbow', cbow_most_prob=False)
-    # S = 1
-    # x_v = new_continuous_data.get_removed_mutations(sentence)
+def explain(sentence, mutation_method):
+    x_v = mutation_method(sentence)
+    S = math.ceil(len(x_v) / len(sentence.split()))
     x_v.append(sentence)
 
     x_variants = np.array(list(vocab_processor.transform(x_v)))
@@ -81,9 +79,9 @@ def explain(sentence):
     for i in range(len(words)):
         pred_probs = []
         for j in range(S * i, S * (i + 1)):
-            print(x_v[j])
-            print(all_probabilities[j])
-            print(softmax(all_probabilities[j])[int(predicted_y)])
+            # print(x_v[j])
+            # print(all_probabilities[j])
+            # print(softmax(all_probabilities[j])[int(predicted_y)])
             pred_probs.append(softmax(all_probabilities[j])[int(predicted_y)])
         weight_evidence.append(np.average(pred_probs))
     stacked = np.column_stack((words, weight_evidence))
@@ -99,4 +97,18 @@ def explain(sentence):
 
 # with open('data/rt-polaritydata/rt-polarity.pos', 'r') as f:
 #     for line in f:
-explain('if they want to pay hundreds of dollars for a dull wine , so be it . ')
+sentence = 'this is a real lame movie that tries too hard to incorporate too many things at once .'
+print(sentence)
+S = 1500
+print('cbow')
+explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1, window_mode='cbow', cbow_most_prob=False))
+print('unigram')
+explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1))
+print('bigram')
+explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=2))
+print('trigram')
+explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=3))
+print('removed')
+explain(sentence, new_continuous_data.get_removed_mutations)
+print('unked')
+explain(sentence, new_continuous_data.get_unked_mutations)

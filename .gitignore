@@ -9,6 +9,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+cbow_model/model.dump
+
 # C extensions
 *.so
 
