@@ -126,13 +126,67 @@ def explain_window(sentence, mutation_method, samples=300, window_size=5):
     print('Predicted class label:', predicted_y)
 
 
+def explain_couples(sentence, mutation_method, samples=400, removed_mode=False):
+    split = sentence.split()
+    n = len(split)
+    x_v = []
+    couples = []
+    for l in range(n - 1):
+        for j in range(l + 1, n):
+            if removed_mode:
+                s = list(split)
+                del s[j]
+                del s[l]
+                x_v.append(' '.join(s))
+            else:
+                rep1 = mutation_method(sentence, l)
+                rep2 = mutation_method(sentence, j)
+                for i in range(len(rep1)):
+                    s = rep1[i].split()
+                    s[j] = rep2[i].split()[j]
+                    x_v.append(' '.join(s))
+            couples.append((split[l], split[j]))
+    x_v.append(sentence)
+
+    all_probabilities, all_predictions = predict(x_v)
+    predicted_y = all_predictions[-1]
+    prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
+
+    pred_probs = [[] for _ in range(len(couples))]
+
+    for c in range(len(couples)):
+        for i in range(samples * c, samples * (c + 1)):
+            pred_probs[c].append(softmax(all_probabilities[i])[int(predicted_y)])
+    weight_evidence = []
+    for w in range(len(couples)):
+        weight_evidence.append(np.average(pred_probs[w]))
+    stacked = np.column_stack((couples, weight_evidence))
+    stacked = list(sorted(stacked, key=lambda x: float(x[2])))
+    print(stacked)
+    print(prob_y)
+    print('Predicted class label:', predicted_y)
+
 
 # -elling , portrayed with quiet fastidiousness by per christian ellefsen , is a truly singular character , one whose frailties are only slightly magnified versions of the ones that vex nearly everyone .
 
 # with open('data/rt-polaritydata/rt-polarity.pos', 'r') as f:
 #     for line in f:
-sentence = 'this is a real lame movie that tries too hard to incorporate too many things at once .'
+sentence = 'if they want to pay hundreds of dollars for a dull wine , so be it . '
 print(sentence)
+
+S = 400
+print('unigram')
+explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
+print('bigram')
+explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
+print('trigram')
+explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
+print('cbow')
+explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
+print('removed')
+explain_couples(sentence, new_continuous_data.get_removed_mutations, 1, True)
+print('unked')
+explain_couples(sentence, new_continuous_data.get_unked_mutations, 1)
 
 S = 300
 print('unigram')
@@ -148,16 +202,16 @@ explain_window(sentence, new_continuous_data.get_removed_mutations, 1)
 print('unked')
 explain_window(sentence, new_continuous_data.get_unked_mutations, 1)
 
-# S = 1000
-# print('unigram')
-# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
-# print('bigram')
-# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
-# print('trigram')
-# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
-# print('cbow')
-# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
-# print('removed')
-# explain(sentence, new_continuous_data.get_removed_mutations)
-# print('unked')
-# explain(sentence, new_continuous_data.get_unked_mutations)
+S = 1000
+print('unigram')
+explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
+print('bigram')
+explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
+print('trigram')
+explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
+print('cbow')
+explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
+print('removed')
+explain(sentence, new_continuous_data.get_removed_mutations)
+print('unked')
+explain(sentence, new_continuous_data.get_unked_mutations)
