@@ -32,16 +32,8 @@ vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
 vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
 
-def explain(sentence, mutation_method):
-    second = True
-    x_v = mutation_method(sentence)
-    if(second):
-        S = math.ceil(len(x_v) / (len(sentence.split())* (len(sentence.split()) + 1) / 2.0 ) )
-    else:
-        S = math.ceil(len(x_v) / len(sentence.split()))
-    x_v.append(sentence)
-
-    x_variants = np.array(list(vocab_processor.transform(x_v)))
+def predict(mutations):
+    x_variants = np.array(list(vocab_processor.transform(mutations)))
     checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
     graph = tf.Graph()
     with graph.as_default():
@@ -61,7 +53,6 @@ def explain(sentence, mutation_method):
             probabilities = graph.get_operation_by_name("output/scores").outputs[0]
             predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
-            #TODO: GET THE NEW LIST
             batches = data_helpers.batch_iter(list(x_variants), FLAGS.batch_size, 1, shuffle=False)
 
             # Collect the predictions here
@@ -73,14 +64,26 @@ def explain(sentence, mutation_method):
                 all_predictions = np.concatenate([all_predictions, results[0]])
                 for result in results[1]:
                     all_probabilities.append(result)
+    return all_probabilities, all_predictions
+
+
+def explain(sentence, mutation_method):
+    words = sentence.split()
+    n = len(words)
+    x_v = []
+    for i in range(n):
+        x_v.extend(mutation_method(sentence, i))
+    S = math.ceil(len(x_v) / n)
+    x_v.append(sentence)
+
+    all_probabilities, all_predictions = predict(x_v)
     predicted_y = all_predictions[-1]
     # print(predicted_y)
     prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
 
-    words = sentence.split()
     weight_evidence = []
 
-    for i in range(len(words)):
+    for i in range(n):
         pred_probs = []
         for j in range(S * i, S * (i + 1)):
             # print(x_v[j])
@@ -90,12 +93,39 @@ def explain(sentence, mutation_method):
         weight_evidence.append(np.average(pred_probs))
     stacked = np.column_stack((words, weight_evidence))
     print(stacked)
-    out_path = os.path.join(FLAGS.checkpoint_dir, "..", "explain.csv")
-    with open(out_path, 'w') as f:
-        csv.writer(f).writerows(stacked)
     print(prob_y)
     print('Predicted class label:', predicted_y)
-    print(checkpoint_file)
+
+def explain_window(sentence, mutation_method, samples=300, window_size=5):
+    split = sentence.split()
+    n = len(split)
+    windows = n - window_size + 1
+    x_v = []
+    for l in range(windows):
+        window = ' '.join(split[l:l+window_size])
+        for j in range(window_size):
+            x_v.extend(mutation_method(window, j))
+    x_v.append(sentence)
+
+    all_probabilities, all_predictions = predict(x_v)
+    predicted_y = all_predictions[-1]
+    prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
+
+    pred_probs = [[] for _ in range(n)]
+
+    for l in range(windows):
+        for j in range(l, l + window_size):
+            for i in range(samples * (window_size * l + j - l), samples * (window_size * l + j - l + 1)):
+                pred_probs[j].append(softmax(all_probabilities[i])[int(predicted_y)])
+    weight_evidence = []
+    for w in range(n):
+        weight_evidence.append(np.average(pred_probs[w]))
+    stacked = np.column_stack((split, weight_evidence))
+    print(stacked)
+    print(prob_y)
+    print('Predicted class label:', predicted_y)
+
+
 
 # -elling , portrayed with quiet fastidiousness by per christian ellefsen , is a truly singular character , one whose frailties are only slightly magnified versions of the ones that vex nearly everyone .
 
@@ -103,24 +133,31 @@ def explain(sentence, mutation_method):
 #     for line in f:
 sentence = 'this is a real lame movie that tries too hard to incorporate too many things at once .'
 print(sentence)
-S = 3
-# print('cbow')
-# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1, window_mode='cbow', cbow_most_prob=False))
+
+S = 300
+print('unigram')
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
+print('bigram')
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
+print('trigram')
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
+print('cbow')
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
+print('removed')
+explain_window(sentence, new_continuous_data.get_removed_mutations, 1)
+print('unked')
+explain_window(sentence, new_continuous_data.get_unked_mutations, 1)
+
+# S = 1000
 # print('unigram')
-# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1))
+# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
 # print('bigram')
-# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=2))
+# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
 # print('trigram')
-# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=3))
+# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
+# print('cbow')
+# explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
 # print('removed')
 # explain(sentence, new_continuous_data.get_removed_mutations)
 # print('unked')
 # explain(sentence, new_continuous_data.get_unked_mutations)
-
-# TEst with pairs
-print('unigram')
-explain(sentence, lambda x: new_continuous_data.get_mutations_pairs(x, S, window_size=1))
-print('bigram')
-explain(sentence, lambda x: new_continuous_data.get_mutations_pairs(x, S, window_size=2))
-print('trigram')
-explain(sentence, lambda x: new_continuous_data.get_mutations_pairs(x, S, window_size=3))
