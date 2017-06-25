@@ -33,8 +33,12 @@ vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
 
 def explain(sentence, mutation_method):
+    second = True
     x_v = mutation_method(sentence)
-    S = math.ceil(len(x_v) / len(sentence.split()))
+    if(second):
+        S = math.ceil(len(x_v) / (len(sentence.split())* (len(sentence.split()) + 1) / 2.0 ) )
+    else:
+        S = math.ceil(len(x_v) / len(sentence.split()))
     x_v.append(sentence)
 
     x_variants = np.array(list(vocab_processor.transform(x_v)))
@@ -99,16 +103,24 @@ def explain(sentence, mutation_method):
 #     for line in f:
 sentence = 'this is a real lame movie that tries too hard to incorporate too many things at once .'
 print(sentence)
-S = 1500
-print('cbow')
-explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1, window_mode='cbow', cbow_most_prob=False))
+S = 3
+# print('cbow')
+# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1, window_mode='cbow', cbow_most_prob=False))
+# print('unigram')
+# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1))
+# print('bigram')
+# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=2))
+# print('trigram')
+# explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=3))
+# print('removed')
+# explain(sentence, new_continuous_data.get_removed_mutations)
+# print('unked')
+# explain(sentence, new_continuous_data.get_unked_mutations)
+
+# TEst with pairs
 print('unigram')
-explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=1))
+explain(sentence, lambda x: new_continuous_data.get_mutations_pairs(x, S, window_size=1))
 print('bigram')
-explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=2))
+explain(sentence, lambda x: new_continuous_data.get_mutations_pairs(x, S, window_size=2))
 print('trigram')
-explain(sentence, lambda x: new_continuous_data.get_mutations(x, S, window_size=3))
-print('removed')
-explain(sentence, new_continuous_data.get_removed_mutations)
-print('unked')
-explain(sentence, new_continuous_data.get_unked_mutations)
+explain(sentence, lambda x: new_continuous_data.get_mutations_pairs(x, S, window_size=3))
