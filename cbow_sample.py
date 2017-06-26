@@ -4,7 +4,7 @@ import pickle
 
 PATH = 'data/rt-polaritydata/combined.txt'
 MODEL_PATH = 'cbow_model/'
-NUM_TOKENS = 268215
+NUM_TOKENS = 4000
 TRAIN_MODEL = False
 LOAD_MODEL = True
 
@@ -29,8 +29,7 @@ def sample_cbow(left_word, right_word, model, accurate_word, samples=1, most_pro
             cbow_terms.append(word)
             cbow_prob.append(output_word[i][1])
         cbow_prob = cbow_prob / np.sum(cbow_prob)
-        for _ in range(samples):
-            cbow_samples.append(np.random.choice(cbow_terms, 1, p=cbow_prob))
+        cbow_samples.extend(np.random.choice(cbow_terms, samples, p=cbow_prob))
     else:
         cbow_samples = [output_word[0][0]] * samples  # return word that has the highest probability predicted by cbow
     return cbow_samples

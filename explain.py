@@ -67,6 +67,11 @@ def predict(mutations):
     return all_probabilities, all_predictions
 
 
+def we(pcminx, pc):
+    log1 = math.log(999999999999) if pc == 1 else math.log(pc / (1-pc))
+    log2 = math.log(999999999999) if pcminx == 1 else math.log(pcminx / (1-pcminx))
+    return log1 - log2
+
 def explain(sentence, mutation_method):
     words = sentence.split()
     n = len(words)
@@ -96,7 +101,7 @@ def explain(sentence, mutation_method):
     print(prob_y)
     print('Predicted class label:', predicted_y)
 
-def explain_window(sentence, mutation_method, samples=300, window_size=5):
+def explain_window(sentence, mutation_method, samples=600, window_size=7):
     split = sentence.split()
     n = len(split)
     windows = n - window_size + 1
@@ -105,6 +110,7 @@ def explain_window(sentence, mutation_method, samples=300, window_size=5):
         window = ' '.join(split[l:l+window_size])
         for j in range(window_size):
             x_v.extend(mutation_method(window, j))
+        x_v.append(window)
     x_v.append(sentence)
 
     all_probabilities, all_predictions = predict(x_v)
@@ -114,9 +120,10 @@ def explain_window(sentence, mutation_method, samples=300, window_size=5):
     pred_probs = [[] for _ in range(n)]
 
     for l in range(windows):
+        window_prob = softmax(all_probabilities[l * (window_size * samples + 1) + samples])[int(predicted_y)]
         for j in range(l, l + window_size):
-            for i in range(samples * (window_size * l + j - l), samples * (window_size * l + j - l + 1)):
-                pred_probs[j].append(softmax(all_probabilities[i])[int(predicted_y)])
+            for i in range(samples * (window_size * l + j - l) + l, samples * (window_size * l + j - l + 1) + l):
+                pred_probs[j].append(we(softmax(all_probabilities[i])[int(predicted_y)], window_prob))
     weight_evidence = []
     for w in range(n):
         weight_evidence.append(np.average(pred_probs[w]))
@@ -171,32 +178,32 @@ def explain_couples(sentence, mutation_method, samples=400, removed_mode=False):
 
 # with open('data/rt-polaritydata/rt-polarity.pos', 'r') as f:
 #     for line in f:
-sentence = 'if they want to pay hundreds of dollars for a dull wine , so be it . '
+sentence = 'this is a real lame movie that tries too hard to incorporate too many things at once .'
 print(sentence)
 
-S = 400
-print('unigram')
-explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
-print('bigram')
-explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
-print('trigram')
-explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
-print('cbow')
-explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
-print('removed')
-explain_couples(sentence, new_continuous_data.get_removed_mutations, 1, True)
-print('unked')
-explain_couples(sentence, new_continuous_data.get_unked_mutations, 1)
+# S = 400
+# print('unigram')
+# explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
+# print('bigram')
+# explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
+# print('trigram')
+# explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
+# print('cbow')
+# explain_couples(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
+# print('removed')
+# explain_couples(sentence, new_continuous_data.get_removed_mutations, 1, True)
+# print('unked')
+# explain_couples(sentence, new_continuous_data.get_unked_mutations, 1)
 
-S = 300
+S = 600
 print('unigram')
-explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1), S)
 print('bigram')
-explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2), S)
 print('trigram')
-explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3), S)
 print('cbow')
-explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False), S)
 print('removed')
 explain_window(sentence, new_continuous_data.get_removed_mutations, 1)
 print('unked')
