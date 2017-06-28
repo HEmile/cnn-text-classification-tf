@@ -72,12 +72,28 @@ def we(pcminx, pc):
     log2 = math.log(999999999999) if pcminx == 1 else math.log(pcminx / (1-pcminx))
     return log1 - log2
 
+
+def colour_sentence(stacks, normalise_constant=20):
+    s = ''
+    for stack in stacks:
+        norm = max(-1, min(1, float(stack[1]) / normalise_constant))
+        if norm < 0:
+            s += "{\\color[rgb]{0, 0, " + str(-norm) + "}" + stack[0] + "} "
+        else:
+            s += "{\\color[rgb]{" + str(norm) + ", 0, 0}" + stack[0] + "} "
+    return s
+
+
 def explain(sentence, mutation_method):
     words = sentence.split()
     n = len(words)
     x_v = []
+    prob_distr = []
     for i in range(n):
-        x_v.extend(mutation_method(sentence, i))
+        xs, probs = mutation_method(sentence, i)
+        x_v.extend(xs)
+        if not(probs is None):
+            prob_distr.extend(probs)
     S = math.ceil(len(x_v) / n)
     x_v.append(sentence)
 
@@ -94,10 +110,17 @@ def explain(sentence, mutation_method):
             # print(x_v[j])
             # print(all_probabilities[j])
             # print(softmax(all_probabilities[j])[int(predicted_y)])
-            pred_probs.append(softmax(all_probabilities[j])[int(predicted_y)])
-        weight_evidence.append(np.average(pred_probs))
+            evidence = we(softmax(all_probabilities[j])[int(predicted_y)], prob_y)
+            if len(prob_distr) > 0:
+                pred_probs.append(evidence * prob_distr[j])
+            else:
+                pred_probs.append(evidence)
+        if len(prob_distr) > 0:
+            weight_evidence.append(sum(pred_probs))
+        else:
+            weight_evidence.append(np.average(pred_probs))
     stacked = np.column_stack((words, weight_evidence))
-    print(stacked)
+    print(colour_sentence(stacked))
     print(prob_y)
     print('Predicted class label:', predicted_y)
 
@@ -106,11 +129,17 @@ def explain_window(sentence, mutation_method, samples=600, window_size=7):
     n = len(split)
     windows = n - window_size + 1
     x_v = []
+    prob_distr = []
     for l in range(windows):
         window = ' '.join(split[l:l+window_size])
         for j in range(window_size):
-            x_v.extend(mutation_method(window, j))
+            mutated_s, prob_d = mutation_method(window, j)
+            x_v.extend(mutated_s)
+            if not(prob_d is None):
+                prob_distr.extend(prob_d)
         x_v.append(window)
+        if len(prob_distr) > 0:
+            prob_distr.append(0)
     x_v.append(sentence)
 
     all_probabilities, all_predictions = predict(x_v)
@@ -118,17 +147,30 @@ def explain_window(sentence, mutation_method, samples=600, window_size=7):
     prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
 
     pred_probs = [[] for _ in range(n)]
-
+    print(len(prob_distr))
+    print(len(all_probabilities))
+    print(samples, windows, window_size, samples*windows*window_size)
+    c = 0
     for l in range(windows):
-        window_prob = softmax(all_probabilities[l * (window_size * samples + 1) + samples])[int(predicted_y)]
+        window_prob = softmax(all_probabilities[c])[int(predicted_y)]
+        c += 1
         for j in range(l, l + window_size):
-            for i in range(samples * (window_size * l + j - l) + l, samples * (window_size * l + j - l + 1) + l):
-                pred_probs[j].append(we(softmax(all_probabilities[i])[int(predicted_y)], window_prob))
+            for _ in range(samples):
+                weight_evi_i = we(softmax(all_probabilities[c])[int(predicted_y)], window_prob)
+                if len(prob_distr) > 0:
+                    pred_probs[j].append(weight_evi_i * prob_distr[c])
+                else:
+                    pred_probs[j].append(weight_evi_i)
+                c += 1
     weight_evidence = []
     for w in range(n):
-        weight_evidence.append(np.average(pred_probs[w]))
+        if prob_distr:
+            weight_evidence.append(sum(pred_probs[w]))
+        else:
+            weight_evidence.append(np.average(pred_probs[w]))
     stacked = np.column_stack((split, weight_evidence))
     print(stacked)
+    print(colour_sentence(stacked))
     print(prob_y)
     print('Predicted class label:', predicted_y)
 
@@ -194,22 +236,21 @@ print(sentence)
 # explain_couples(sentence, new_continuous_data.get_removed_mutations, 1, True)
 # print('unked')
 # explain_couples(sentence, new_continuous_data.get_unked_mutations, 1)
-
-S = 600
+S = 4000
+print('cbow')
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False), S)
 print('unigram')
 explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1), S)
 print('bigram')
 explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2), S)
 print('trigram')
 explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3), S)
-print('cbow')
-explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False), S)
 print('removed')
 explain_window(sentence, new_continuous_data.get_removed_mutations, 1)
 print('unked')
 explain_window(sentence, new_continuous_data.get_unked_mutations, 1)
 
-S = 1000
+S = 5000
 print('unigram')
 explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
 print('bigram')

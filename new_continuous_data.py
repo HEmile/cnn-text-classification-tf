@@ -25,6 +25,7 @@ def get_mutations(sentence, S, index, window_size=2, window_mode="preceding", cb
     sentence = sentence.split()
 
     mutations = []
+    prob_dis = None
     if window_mode == "preceding" and (index - window_size + 1 >= 0):
         for _ in range(S):
             mutation = sentence[:]
@@ -48,27 +49,27 @@ def get_mutations(sentence, S, index, window_size=2, window_mode="preceding", cb
                 mutation[mutated_index] = mutated_word
             mutations.append(' '.join(mutation))
     elif window_mode == "cbow" and (index - 1 >= 0) and (index < len(sentence)-1): #always uses a window of 3
-        mutated_words = sample_cbow(sentence[index-1], sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
+        mutated_words, prob_dis = sample_cbow(sentence[index-1], sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
         for word in mutated_words:
             mutation = sentence[:]
             mutation[index] = word[0]
 
             mutations.append(' '.join(mutation))
     elif window_mode == "cbow" and (index == 0):
-        mutated_words = sample_cbow("<START>", sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
+        mutated_words, prob_dis = sample_cbow("<START>", sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
         for mutated_word in mutated_words:
             mutation = sentence[:]
             mutation[index] = mutated_word[0]
 
             mutations.append(' '.join(mutation))
     elif window_mode == "cbow" and (index == len(sentence)-1):
-        mutated_words = sample_cbow(sentence[index-1], "<END>", model, sentence[index], samples=S, most_prob=cbow_most_prob)
+        mutated_words, prob_dis = sample_cbow(sentence[index-1], "<END>", model, sentence[index], samples=S, most_prob=cbow_most_prob)
         for mutated_word in mutated_words:
             mutation = sentence[:]
             mutation[index] = mutated_word[0]
 
             mutations.append(' '.join(mutation))
-    return mutations
+    return mutations, prob_dis
 
 def get_predictable_by_ngram_mutated_words(ngrams, index, j):
     indices2 = range(index - window_size + j, index + j)
@@ -82,7 +83,7 @@ def get_removed_mutations(sentence, index):
     neww = list(words)
     del neww[index]
     mutations.append(' '.join(neww))
-    return mutations
+    return mutations, None
 
 def get_unked_mutations(sentence, index):
     mutations = []
@@ -90,7 +91,7 @@ def get_unked_mutations(sentence, index):
     neww = list(words)
     neww[index] = '-UNK'
     mutations.append(' '.join(neww))
-    return mutations
+    return mutations, None
 
 
 def get_removed_phrase_mutations(sentence, max_phrase=3):
@@ -102,7 +103,7 @@ def get_removed_phrase_mutations(sentence, max_phrase=3):
             neww = list(words)
             neww[i:i+phr_length] = unks
             mutations.append(' '.join(neww))
-    return mutations
+    return mutations, None
 
 
 example = False
