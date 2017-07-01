@@ -68,8 +68,8 @@ def predict(mutations):
 
 
 def we(pcminx, pc):
-    log1 = math.log(999999999999) if pc == 1 else math.log(pc / (1-pc))
-    log2 = math.log(999999999999) if pcminx == 1 else math.log(pcminx / (1-pcminx))
+    log1 = math.log(999999999999) if pc >= 1 else math.log(pc / (1-pc))
+    log2 = math.log(999999999999) if pcminx >= 1 else math.log(pcminx / (1-pcminx))
     return log1 - log2
 
 
@@ -121,10 +121,10 @@ def explain(sentence, mutation_method):
             weight_evidence.append(np.average(pred_probs))
     stacked = np.column_stack((words, weight_evidence))
     print(colour_sentence(stacked))
-    print(prob_y)
-    print('Predicted class label:', predicted_y)
+    # print(prob_y)
+    # print('Predicted class label:', predicted_y)
 
-def explain_window(sentence, mutation_method, samples=600, window_size=7):
+def explain_window(sentence, mutation_method, samples=600, window_size=7, use_prob_distr=False):
     split = sentence.split()
     n = len(split)
     windows = n - window_size + 1
@@ -132,14 +132,14 @@ def explain_window(sentence, mutation_method, samples=600, window_size=7):
     prob_distr = []
     for l in range(windows):
         window = ' '.join(split[l:l+window_size])
+        x_v.append(window)
+        if use_prob_distr:
+            prob_distr.append(0)
         for j in range(window_size):
             mutated_s, prob_d = mutation_method(window, j)
             x_v.extend(mutated_s)
             if not(prob_d is None):
                 prob_distr.extend(prob_d)
-        x_v.append(window)
-        if len(prob_distr) > 0:
-            prob_distr.append(0)
     x_v.append(sentence)
 
     all_probabilities, all_predictions = predict(x_v)
@@ -147,31 +147,31 @@ def explain_window(sentence, mutation_method, samples=600, window_size=7):
     prob_y = softmax(all_probabilities[-1])[int(predicted_y)]
 
     pred_probs = [[] for _ in range(n)]
-    print(len(prob_distr))
-    print(len(all_probabilities))
-    print(samples, windows, window_size, samples*windows*window_size)
     c = 0
     for l in range(windows):
         window_prob = softmax(all_probabilities[c])[int(predicted_y)]
         c += 1
         for j in range(l, l + window_size):
+            a = []
             for _ in range(samples):
-                weight_evi_i = we(softmax(all_probabilities[c])[int(predicted_y)], window_prob)
+                prob_i = softmax(all_probabilities[c])[int(predicted_y)]
                 if len(prob_distr) > 0:
-                    pred_probs[j].append(weight_evi_i * prob_distr[c])
+                    a.append(prob_i * prob_distr[c])
                 else:
-                    pred_probs[j].append(weight_evi_i)
+                    a.append(prob_i)
                 c += 1
+            if len(prob_distr) > 0:
+                pred_probs[j].append(we(sum(a), window_prob))
+            else:
+                pred_probs[j].append(we(np.average(a), window_prob))
+
     weight_evidence = []
     for w in range(n):
-        if prob_distr:
-            weight_evidence.append(sum(pred_probs[w]))
-        else:
-            weight_evidence.append(np.average(pred_probs[w]))
+        weight_evidence.append(np.average(pred_probs[w]))
     stacked = np.column_stack((split, weight_evidence))
-    print(stacked)
+    # print(stacked)
     print(colour_sentence(stacked))
-    print(prob_y)
+    # print(prob_y)
     print('Predicted class label:', predicted_y)
 
 
@@ -220,7 +220,8 @@ def explain_couples(sentence, mutation_method, samples=400, removed_mode=False):
 
 # with open('data/rt-polaritydata/rt-polarity.pos', 'r') as f:
 #     for line in f:
-sentence = 'this is a real lame movie that tries too hard to incorporate too many things at once .'
+sentence = 'i loved watching walken in this role thinking about what the future held for him . '
+# sentence = 'the storyplot was okay by itself , but the film felt very bubbly and fake .'
 print(sentence)
 
 # S = 400
@@ -236,9 +237,10 @@ print(sentence)
 # explain_couples(sentence, new_continuous_data.get_removed_mutations, 1, True)
 # print('unked')
 # explain_couples(sentence, new_continuous_data.get_unked_mutations, 1)
-S = 4000
+S = 10
+print('SLIDING WINDOW')
 print('cbow')
-explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False), S)
+explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False), S, use_prob_distr=True)
 print('unigram')
 explain_window(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1), S)
 print('bigram')
@@ -251,14 +253,15 @@ print('unked')
 explain_window(sentence, new_continuous_data.get_unked_mutations, 1)
 
 S = 5000
+print('NO SLIDING WINDOW')
+print('cbow')
+explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
 print('unigram')
 explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1))
 print('bigram')
 explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=2))
 print('trigram')
 explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=3))
-print('cbow')
-explain(sentence, lambda x, index: new_continuous_data.get_mutations(x, S, index, window_size=1, window_mode='cbow', cbow_most_prob=False))
 print('removed')
 explain(sentence, new_continuous_data.get_removed_mutations)
 print('unked')

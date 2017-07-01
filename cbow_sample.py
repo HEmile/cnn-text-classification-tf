@@ -20,7 +20,6 @@ def sample_cbow(left_word, right_word, model, accurate_word, samples=1, most_pro
     cbow_terms = []
     cbow_prob = []
     norm_term = 0  # used to renormalize probability
-    cbow_samples = []
     if not most_prob:
         for i in range(len(output_word)):
             norm_term += output_word[i][1]
@@ -30,9 +29,6 @@ def sample_cbow(left_word, right_word, model, accurate_word, samples=1, most_pro
             cbow_prob.append(output_word[i][1])
         cbow_terms, cbow_prob = cbow_terms[:samples], cbow_prob[:samples]
         cbow_prob = cbow_prob / np.sum(cbow_prob)
-        # cbow_samples.extend(np.random.choice(cbow_terms, samples, p=cbow_prob))
-    else:
-        cbow_samples = [output_word[0][0]] * samples  # return word that has the highest probability predicted by cbow
     return cbow_terms, cbow_prob
 
 
