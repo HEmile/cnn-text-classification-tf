@@ -26,27 +26,50 @@ def get_mutations(sentence, S, index, window_size=2, window_mode="preceding", cb
 
     mutations = []
     prob_dis = None
+    # if window_mode == "preceding" and (index - window_size + 1 >= 0):
+    #     for _ in range(S):
+    #         mutation = sentence[:]
+    #         indices = range(index - window_size + 1, index + 1)
+    #         words = mutation[index - window_size + 1: index + 1]
+    #         mutated_words = word_from_distribution(ngrams, words)
+    #
+    #         for mutated_index, mutated_word in zip(indices, mutated_words):
+    #             mutation[mutated_index] = mutated_word
+    #
+    #         mutations.append(' '.join(mutation))
+    # elif window_mode == "preceding":
+    # #only the words which can not be predicted by ngram (example: bigram -> index 0 or trigram -> index 0, 1)
+    #     mutated_words = words_from_ngram_distribution("unigram", S)
+    #
+    #     all_mutated_words = list(mutated_words)
+    #     for _ in range(S):
+    #         mutation = sentence[:]
+    #         mutated_words = all_mutated_words.pop()
+    #         for mutated_index, mutated_word in zip(range(index-1,index), mutated_words.split()):
+    #             mutation[mutated_index] = mutated_word
+    #         mutations.append(' '.join(mutation))
     if window_mode == "preceding" and (index - window_size + 1 >= 0):
-        for _ in range(S):
+        words = sentence[index - window_size + 1: index + 1]
+        if len(words) == 3:
+            mutated_words, prob_dis = ngrams.get_trigram(words)
+        elif len(words) == 2:
+            mutated_words, prob_dis = ngrams.get_bigram(words)
+        else:
+            mutated_words, prob_dis = ngrams.get_unigram(words[-1])
+
+        for new_word in mutated_words:
             mutation = sentence[:]
-            indices = range(index - window_size + 1, index + 1)
-            words = mutation[index - window_size + 1: index + 1]
-            mutated_words = word_from_distribution(ngrams, words)
-
-            for mutated_index, mutated_word in zip(indices, mutated_words):
-                mutation[mutated_index] = mutated_word
-
+            mutation[index] = new_word
             mutations.append(' '.join(mutation))
     elif window_mode == "preceding":
     #only the words which can not be predicted by ngram (example: bigram -> index 0 or trigram -> index 0, 1)
-        mutated_words = words_from_ngram_distribution("unigram", S)
-
-        all_mutated_words = list(mutated_words)
-        for _ in range(S):
+        if index == 1:
+            mutated_words, prob_dis = ngrams.get_bigram(sentence[0:2])
+        else:
+            mutated_words, prob_dis = ngrams.get_unigram(sentence[index])
+        for m in mutated_words:
             mutation = sentence[:]
-            mutated_words = all_mutated_words.pop()
-            for mutated_index, mutated_word in zip(range(index-1,index), mutated_words.split()):
-                mutation[mutated_index] = mutated_word
+            mutation[index] = m
             mutations.append(' '.join(mutation))
     elif window_mode == "cbow" and (index - 1 >= 0) and (index < len(sentence)-1): #always uses a window of 3
         mutated_words, prob_dis = sample_cbow(sentence[index-1], sentence[index+1], model, sentence[index], samples=S, most_prob=cbow_most_prob)
